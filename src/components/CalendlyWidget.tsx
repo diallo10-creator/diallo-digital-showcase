@@ -3,21 +3,32 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Clock, Users, Send } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarIcon, Clock, Users, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 const CalendlyWidget = () => {
   const { toast } = useToast();
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedTime, setSelectedTime] = useState<string>("");
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    message: '',
-    preferred_date: '',
-    preferred_time: ''
+    message: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Créneaux disponibles
+  const availableTimeSlots = [
+    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -39,13 +50,24 @@ const CalendlyWidget = () => {
       return;
     }
 
+    if (!selectedDate) {
+      toast({
+        title: "Erreur", 
+        description: "Veuillez sélectionner une date.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('calendly-booking', {
         body: {
           action: 'create_appointment',
-          ...formData
+          ...formData,
+          preferred_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
+          preferred_time: selectedTime
         }
       });
 
@@ -61,10 +83,10 @@ const CalendlyWidget = () => {
         name: '',
         email: '',
         phone: '',
-        message: '',
-        preferred_date: '',
-        preferred_time: ''
+        message: ''
       });
+      setSelectedDate(undefined);
+      setSelectedTime("");
 
     } catch (error) {
       console.error('Error submitting appointment:', error);
@@ -95,7 +117,7 @@ const CalendlyWidget = () => {
           <div className="grid md:grid-cols-3 gap-8 mb-12">
             <Card className="p-6 text-center gradient-card shadow-card border-0 hover:scale-105 transition-bounce animate-slide-up">
               <div className="inline-flex p-4 bg-blue-500 text-white rounded-2xl mb-4">
-                <Calendar className="h-6 w-6" />
+                <CalendarIcon className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-semibold mb-2 text-foreground">
                 Consultation Gratuite
@@ -186,31 +208,74 @@ const CalendlyWidget = () => {
                 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Heure préférée
+                    Date préférée *
                   </label>
-                  <Input
-                    type="time"
-                    name="preferred_time"
-                    value={formData.preferred_time}
-                    onChange={handleInputChange}
-                    className="bg-secondary/50 border-border"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal bg-secondary/50 border-border",
+                          !selectedDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "PPP", { locale: fr }) : "Choisir une date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        disabled={(date) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const dayOfWeek = date.getDay();
+                          // Désactiver les weekends et les dates passées
+                          return date < today || dayOfWeek === 0 || dayOfWeek === 6;
+                        }}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                        locale={fr}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Date préférée
-                </label>
-                <Input
-                  type="date"
-                  name="preferred_date"
-                  value={formData.preferred_date}
-                  onChange={handleInputChange}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="bg-secondary/50 border-border"
-                />
-              </div>
+              {/* Créneaux horaires */}
+              {selectedDate && (
+                <div className="animate-fade-in">
+                  <label className="block text-sm font-medium text-foreground mb-3">
+                    Créneaux disponibles *
+                  </label>
+                  <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                    {availableTimeSlots.map((time) => (
+                      <Button
+                        key={time}
+                        type="button"
+                        variant={selectedTime === time ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedTime(time)}
+                        className={cn(
+                          "h-10 text-sm transition-all",
+                          selectedTime === time 
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                            : "bg-secondary/50 border-border hover:bg-secondary"
+                        )}
+                      >
+                        {time}
+                      </Button>
+                    ))}
+                  </div>
+                  {!selectedTime && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      * Veuillez sélectionner un créneau horaire
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
@@ -228,8 +293,8 @@ const CalendlyWidget = () => {
 
               <Button
                 type="submit"
-                disabled={isLoading}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={isLoading || !selectedDate || !selectedTime}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
@@ -247,7 +312,7 @@ const CalendlyWidget = () => {
 
             <div className="mt-6 p-4 bg-primary/10 rounded-lg">
               <p className="text-sm text-center text-muted-foreground">
-                💡 <strong>Conseil :</strong> Plus vous détaillez votre projet, mieux je pourrai vous conseiller lors de notre entretien.
+                💡 <strong>Conseil :</strong> Sélectionnez une date et un créneau pour finaliser votre demande. Plus vous détaillez votre projet, mieux je pourrai vous conseiller !
               </p>
             </div>
           </Card>
