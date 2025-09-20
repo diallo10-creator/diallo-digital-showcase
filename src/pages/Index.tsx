@@ -7,6 +7,8 @@ import EducationSection from "@/components/EducationSection";
 import ProjectsSection from "@/components/ProjectsSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
+import Chatbot from "@/components/Chatbot";
+import CalendlyWidget from "@/components/CalendlyWidget";
 
 const Index = () => {
   useEffect(() => {
@@ -28,9 +30,11 @@ const Index = () => {
         <SkillsSection />
         <EducationSection />
         <ProjectsSection />
+        <CalendlyWidget />
         <ContactSection />
       </main>
       <Footer />
+      <Chatbot />
     </div>
   );
 };
