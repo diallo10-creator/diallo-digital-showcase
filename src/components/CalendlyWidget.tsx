@@ -1,31 +1,80 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Calendar, Clock, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar, Clock, Users, Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const CalendlyWidget = () => {
-  useEffect(() => {
-    // Load Calendly script
-    const script = document.createElement('script');
-    script.src = 'https://assets.calendly.com/assets/external/widget.js';
-    script.async = true;
-    document.body.appendChild(script);
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+    preferred_date: '',
+    preferred_time: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-    return () => {
-      // Cleanup
-      const existingScript = document.querySelector('script[src="https://assets.calendly.com/assets/external/widget.js"]');
-      if (existingScript) {
-        document.body.removeChild(existingScript);
-      }
-    };
-  }, []);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-  const openCalendly = () => {
-    // @ts-ignore - Calendly global object
-    if (window.Calendly) {
-      // @ts-ignore
-      window.Calendly.initPopupWidget({
-        url: 'https://calendly.com/issadiallo5589'
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.email) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir au moins votre nom et email.",
+        variant: "destructive",
       });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('calendly-booking', {
+        body: {
+          action: 'create_appointment',
+          ...formData
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Demande envoyée !",
+        description: data.message || "Votre demande de rendez-vous a été enregistrée.",
+      });
+
+      // Réinitialiser le formulaire
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        message: '',
+        preferred_date: '',
+        preferred_time: ''
+      });
+
+    } catch (error) {
+      console.error('Error submitting appointment:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer votre demande. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,29 +130,125 @@ const CalendlyWidget = () => {
             </Card>
           </div>
 
-          {/* Calendly Embed */}
-          <Card className="p-8 gradient-hero shadow-hero border-0 text-center animate-fade-in">
-            <h3 className="text-2xl font-bold mb-4 text-white">
-              Prendre Rendez-vous
+          {/* Appointment Form */}
+          <Card className="p-8 bg-background shadow-card border animate-fade-in">
+            <h3 className="text-2xl font-bold mb-6 text-center text-foreground">
+              Demander un Rendez-vous
             </h3>
-            <p className="text-white/90 mb-6">
-              Cliquez ci-dessous pour choisir un créneau qui vous convient
-            </p>
             
-            <button
-              onClick={openCalendly}
-              className="inline-block px-8 py-4 bg-white text-primary font-semibold rounded-lg hover:bg-white/90 transition-smooth"
-            >
-              📅 Réserver un créneau
-            </button>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Nom complet *
+                  </label>
+                  <Input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Votre nom complet"
+                    required
+                    className="bg-secondary/50 border-border"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Email *
+                  </label>
+                  <Input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="votre@email.com"
+                    required
+                    className="bg-secondary/50 border-border"
+                  />
+                </div>
+              </div>
 
-            {/* Inline Calendly Widget */}
-            <div className="mt-8 bg-white rounded-lg p-4">
-              <div 
-                className="calendly-inline-widget" 
-                data-url="https://calendly.com/issadiallo5589"
-                style={{ minWidth: '320px', height: '700px' }}
-              ></div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Téléphone
+                  </label>
+                  <Input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="05 XX XX XX XX"
+                    className="bg-secondary/50 border-border"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Heure préférée
+                  </label>
+                  <Input
+                    type="time"
+                    name="preferred_time"
+                    value={formData.preferred_time}
+                    onChange={handleInputChange}
+                    className="bg-secondary/50 border-border"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Date préférée
+                </label>
+                <Input
+                  type="date"
+                  name="preferred_date"
+                  value={formData.preferred_date}
+                  onChange={handleInputChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="bg-secondary/50 border-border"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Description de votre projet
+                </label>
+                <Textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  placeholder="Décrivez brièvement votre projet digital ou vos besoins..."
+                  rows={4}
+                  className="bg-secondary/50 border-border"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></div>
+                    Envoi en cours...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Send className="h-4 w-4" />
+                    Envoyer ma demande
+                  </div>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 p-4 bg-primary/10 rounded-lg">
+              <p className="text-sm text-center text-muted-foreground">
+                💡 <strong>Conseil :</strong> Plus vous détaillez votre projet, mieux je pourrai vous conseiller lors de notre entretien.
+              </p>
             </div>
           </Card>
         </div>
