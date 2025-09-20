@@ -18,7 +18,7 @@ const Chatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Bonjour ! Je suis l'assistant de Diallo Issa. Posez-moi vos questions sur ses compétences, ses projets ou pour prendre rendez-vous !",
+      content: "👋 Salut ! Je suis **ISSA-AI**, l'assistant intelligent de Diallo Issa.\n\nJe peux vous aider avec :\n• **Informations** sur ses services et expertise\n• **Conseils** techniques et stratégiques\n• **Estimations** budgétaires pour vos projets\n• **Prise de rendez-vous** pour une consultation\n\n💬 **Comment puis-je vous aider aujourd'hui ?**",
       isUser: false,
       timestamp: new Date(),
     }
@@ -104,10 +104,13 @@ const Chatbot = () => {
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                 <Bot className="h-5 w-5 text-primary" />
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Assistant Diallo</h3>
-                <p className="text-xs text-muted-foreground">En ligne</p>
-              </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">ISSA-AI</h3>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    Assistant intelligent en ligne
+                  </p>
+                </div>
             </div>
           </div>
 
@@ -125,13 +128,26 @@ const Chatbot = () => {
                 )}
                 
                 <div
-                  className={`max-w-[200px] p-2 rounded-lg text-sm ${
+                  className={`max-w-[250px] p-3 rounded-lg text-sm leading-relaxed ${
                     message.isUser
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-secondary/50 text-foreground'
                   }`}
                 >
-                  {message.content}
+                  <div className="whitespace-pre-wrap">
+                    {message.content.split('\n').map((line, index) => {
+                      if (line.startsWith('**') && line.endsWith('**')) {
+                        return <div key={index} className="font-semibold">{line.slice(2, -2)}</div>;
+                      }
+                      if (line.startsWith('• ')) {
+                        return <div key={index} className="ml-2">{line}</div>;
+                      }
+                      if (line.startsWith('💰 **') || line.startsWith('🗓️ **')) {
+                        return <div key={index} className="font-semibold text-primary mt-2 p-2 bg-primary/10 rounded">{line}</div>;
+                      }
+                      return <div key={index}>{line}</div>;
+                    })}
+                  </div>
                 </div>
 
                 {message.isUser && (
@@ -165,7 +181,7 @@ const Chatbot = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Posez votre question..."
+                placeholder="Décrivez votre projet ou posez votre question..."
                 className="flex-1 bg-secondary/50 border-white/10"
                 disabled={isLoading}
               />
