@@ -14,8 +14,8 @@ const ContactSection = () => {
     {
       icon: <MessageCircle className="h-6 w-6" />,
       title: "WhatsApp",
-      value: "05 54 87 62 99", 
-      action: "https://wa.me/33554876299",
+      value: "07 77 42 28 98", 
+      action: "https://wa.me/33777422898",
       color: "bg-green-500"
     },
     {
@@ -97,7 +97,7 @@ const ContactSection = () => {
                   size="lg"
                   variant="outline"
                   className="border-white text-white hover:bg-white hover:text-primary transition-smooth"
-                  onClick={() => window.open('https://wa.me/33554876299')}
+                  onClick={() => window.open('https://wa.me/33777422898')}
                 >
                   <MessageCircle className="mr-2 h-5 w-5" />
                   WhatsApp

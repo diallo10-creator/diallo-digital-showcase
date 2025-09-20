@@ -25,7 +25,7 @@ const Footer = () => {
             05 54 87 62 99
           </a>
           <span className="hidden sm:block">•</span>
-          <a href="https://wa.me/33554876299" className="hover:text-background transition-smooth">
+          <a href="https://wa.me/33777422898" className="hover:text-background transition-smooth">
             WhatsApp
           </a>
           <span className="hidden sm:block">•</span>
