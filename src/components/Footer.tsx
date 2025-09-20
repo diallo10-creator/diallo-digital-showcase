@@ -16,7 +16,7 @@ const Footer = () => {
             Diallo Issa
           </button>
           <p className="mt-2 text-background/70">
-            Expert en Marketing Digital & Création Web
+            Créateur Web et Digital
           </p>
         </div>
 
@@ -29,8 +29,8 @@ const Footer = () => {
             WhatsApp
           </a>
           <span className="hidden sm:block">•</span>
-          <a href="mailto:diallo.issa@contact.fr" className="hover:text-background transition-smooth">
-            diallo.issa@contact.fr
+          <a href="mailto:issadiallo5589@gmail.com" className="hover:text-background transition-smooth">
+            issadiallo5589@gmail.com
           </a>
         </div>
 

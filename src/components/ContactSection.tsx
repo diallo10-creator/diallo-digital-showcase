@@ -21,8 +21,8 @@ const ContactSection = () => {
     {
       icon: <Mail className="h-6 w-6" />,
       title: "Email",
-      value: "diallo.issa@contact.fr",
-      action: "mailto:diallo.issa@contact.fr",
+      value: "issadiallo5589@gmail.com",
+      action: "mailto:issadiallo5589@gmail.com",
       color: "bg-purple-500"
     }
   ];
