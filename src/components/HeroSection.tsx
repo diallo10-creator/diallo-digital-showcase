@@ -43,9 +43,12 @@ const HeroSection = () => {
                 variant="outline" 
                 size="lg"
                 className="hover:bg-accent/20 transition-smooth"
+                asChild
               >
-                <Download className="mr-2 h-5 w-5" />
-                Télécharger CV
+                <a href="/CV_Pro_2025.pdf" download="CV_Diallo_Issa.pdf">
+                  <Download className="mr-2 h-5 w-5" />
+                  Télécharger CV
+                </a>
               </Button>
             </div>
           </div>
